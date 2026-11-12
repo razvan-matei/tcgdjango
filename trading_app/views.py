@@ -1,7 +1,13 @@
 import datetime
 from django.shortcuts import render
 from django.http import HttpResponse
-
+import random
+from django.conf import settings
+from django.core.paginator import Paginator
+from django.shortcuts import render, get_object_or_404
+from .models import Produs, Categorie
+from django.http import HttpResponse
+from django.core.mail import send_mail
 
 ZILE_ROMANIA = ['Luni', 'Marți', 'Miercuri', 'Joi', 'Vineri', 'Sâmbătă', 'Duminică']
 LUNI_ROMANIA = ['', 'Ianuarie', 'Februarie', 'Martie', 'Aprilie', 'Mai', 'Iunie', 'Iulie', 'August', 'Septembrie', 'Octombrie', 'Noiembrie', 'Decembrie']
@@ -144,7 +150,7 @@ def log_view(request):
         lista_li = "".join([f"<li>Data și ora: {a.calculeaza_data()}</li>" for a in accesari_afisate])
         html_suplimentar_accesari = f"<ul>{lista_li}</ul>"
 
-    # 4. Secțiunea "Parametri"
+    # 4. Sectiunea "Parametri"
     numar_parametri = len(request.GET)
     nume_parametri = list(request.GET.keys())
     sectiune_parametri = f"<h3>Parametri primiți ({numar_parametri}):</h3><p>{nume_parametri}</p>"
@@ -170,7 +176,7 @@ def log_view(request):
             tr_s += f"<tr>{tds}</tr>"
         html_tabel = f"<table border='1'><tr>{th_s}</tr>{tr_s}</table>"
 
-    # 6. Cea mai puțin și cea mai mult accesată pagină
+    # 6. Cea mai putin si cea mai mult accesata pagina
     pagini_numar = {}
     for a in TOATE_ACCESARILE:
         p = a.pagina()
@@ -183,14 +189,14 @@ def log_view(request):
 
     statistici_pagini = f"<p>Pagina cea mai accesată: <b>{cel_mai_mult}</b> | Pagina cea mai puțin accesată: <b>{cel_mai_putin}</b></p>"
 
-    # Construire răspuns final
+    # Construire raspuns final
     continut = f"<h1>Pagina de Log</h1>{sectiune_parametri}{html_suplimentar_accesari}"
     if eroare_ultimele:
         continut += f"<p style='color:red;'>{eroare_ultimele}</p>"
     if html_tabel:
         continut += html_tabel
     else:
-        # Afișare listă simplă dacă nu e tabel
+        # Afisare lista simpla daca nu e tabel
         ul_acc = "".join([f"<li>{str(a)}</li>" for a in accesari_afisate])
         continut += f"<ul>{ul_acc}</ul>"
         
@@ -204,6 +210,72 @@ def detaliu_accesare(request, id_accesare):
     if not gasit:
         return HttpResponse("Accesarea nu a fost găsită.", status=404)
     return HttpResponse(f"<h1>Detalii Accesare #{gasit.id}</h1><p>{str(gasit)}</p>")
+
+def lista_produse(request, nume_categorie=None):
+    categorie_curenta = None
+    produse = Produs.objects.select_related('categorie').all()
+
+    # Filtrare după categorie dacă suntem pe ruta /categorii/<nume_categorie>/
+    if nume_categorie:
+        categorie_curenta = get_object_or_404(Categorie, nume=nume_categorie)
+        produse = produse.filter(categorie=categorie_curenta)
+
+    # 1. Filtrare cumulativă după taguri active (?tag=holo&tag=rar)
+    taguri_active = request.GET.getlist('tag')
+    for tag in taguri_active:
+        produse = produse.filter(tags__contains=[tag])
+
+    # 2. Sortare (?sort=a|d&col=pret|titlu|stoc)
+    sort_dir = request.GET.get('sort', '')
+    sort_col = request.GET.get('col', 'titlu')
+    coloane_permise = {'titlu', 'pret', 'stoc', 'data_adaugare'}
+
+    if sort_dir in ('a', 'd') and sort_col in coloane_permise:
+        prefix = '' if sort_dir == 'a' else '-'
+        produse = produse.order_by(f'{prefix}{sort_col}')
+
+    # 3. Paginare pe produsele deja filtrate și sortate
+    paginator = Paginator(produse, settings.PROD_PER_PAG)
+    numar_pagina = request.GET.get('page', 1)
+    page_obj = paginator.get_page(numar_pagina)
+
+    # Construim query string-ul fără parametrul 'page' pentru linkurile de paginare
+    params_fara_page = request.GET.copy()
+    params_fara_page.pop('page', None)
+    query_string_paginare = params_fara_page.urlencode()
+
+    context = {
+        'page_obj': page_obj,
+        'categorie_curenta': categorie_curenta,
+        'taguri_active': taguri_active,
+        'sort_dir': sort_dir,
+        'sort_col': sort_col,
+        'stoc_min': settings.STOC_MIN,
+        'query_string_paginare': query_string_paginare,
+    }
+    return render(request, 'trading_app/produse.html', context)
+
+
+def produse_categorie(request, nume_categorie):
+    return lista_produse(request, nume_categorie=nume_categorie)
+
+
+def detaliu_produs(request, produs_id):
+    # Afișează 404 (pagină de eroare) dacă produsul nu există
+    produs = get_object_or_404(Produs, id=produs_id)
+
+    # Selectare aleatoare a K produse din aceeași categorie
+    produse_aceeasi_cat = list(
+        Produs.objects.filter(categorie=produs.categorie).exclude(id=produs.id)
+    )
+    k = min(len(produse_aceeasi_cat), settings.NR_PRODUSE_SIMILARE)
+    produse_similare = random.sample(produse_aceeasi_cat, k)
+
+    return render(request, 'trading_app/detaliu_produs.html', {
+        'produs': produs,
+        'produse_similare': produse_similare,
+        'stoc_min': settings.STOC_MIN,
+    })
 
 def produse_view(request):
     return render(request, 'trading_app/in_lucru.html')
@@ -219,3 +291,14 @@ def istoric_view(request):
 
 def despre_view(request):
     return render(request, 'trading_app/despre.html')
+
+def trimite_email_test(request):
+    send_mail(
+        subject='Bun venit la Magazinul TCG!',
+        message='Salut! Acesta este un mesaj text simplu trimis din Django.',
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=['razvytheawesomeunicorn@gmail.com'],
+        html_message='<h2>Bun venit la Magazinul TCG!</h2><p>Comanda sau contul tău a fost înregistrat cu succes.</p>',
+        fail_silently=False,
+    )
+    return HttpResponse("E-mailul a fost trimis cu succes!")

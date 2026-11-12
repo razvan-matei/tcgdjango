@@ -1,6 +1,7 @@
 from django.db import models
 from django.db.models import Q
-
+from django.contrib.postgres.fields import ArrayField
+from django.urls import reverse
 
 class Categorie(models.Model):
     nume = models.CharField(
@@ -127,15 +128,23 @@ class Produs(models.Model):
         choices=STARE_CHOICES,
         default='nou'
     )
-    tags = models.CharField(
-        max_length=255,
-        null=True,   # Câmp null (4/5)
+    imagine = models.ImageField(
+        upload_to='produse/',
+        null=True,
+        blank=True
+    )
+    tags = ArrayField(
+        models.CharField(max_length=50),
+        default=list,
         blank=True,
         help_text="Etichete separate prin virgulă (ex: holo, charizard, editie-limitata)."
     )
     data_adaugare = models.DateTimeField(
         auto_now_add=True  # DateTimeField cu valoare implicită data adăugării
     )
+    
+    def get_absolute_url(self):
+        return reverse('detaliu_produs', args=[str(self.id)])
 
     class Meta:
         verbose_name_plural = "Produse"

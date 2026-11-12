@@ -1,0 +1,38 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    /* Culoarea de background a paginii */
+    body {
+        background-color: #eef2f7 !important;
+    }
+    /* Background-ul antetului / meniului de sus */
+    #header {
+        background-color: #1e272e !important;
+        color: #ffffff !important;
+    }
+    /* Background-ul meniului stil breadcrumbs */
+    div.breadcrumbs {
+        background-color: #3c6382 !important;
+        color: #ffffff !important;
+    }
+    /* Culoarea rândului selectat în tabelele admin */
+    #result_list tbody tr.selected {
+        background-color: #ffeaa7 !important;
+    }
+    #result_list tbody tr:hover {
+        background-color: #dfe6e9 !important;
+    }
+</style>
+{% endblock %}
+
+{% block branding %}
+<div id="site-name" style="display: flex; align-items: center; gap: 12px;">
+    <img src="{% static 'trading_app/imagini/logo.png' %}" alt="Logo" style="height: 36px; border-radius: 4px;">
+    <a href="{% url 'admin:index' %}" style="color: #ffdd59; font-weight: bold;">{{ site_header }}</a>
+</div>
+{% endblock %}

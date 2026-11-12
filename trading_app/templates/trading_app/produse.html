@@ -1,0 +1,129 @@
+{% extends 'trading_app/baza.html' %}
+{% load static %}
+
+{% block title %}
+    {% if categorie_curenta %}{{ categorie_curenta.nume }}{% else %}Toate Produsele{% endif %}
+{% endblock %}
+
+{% block content %}
+<div style="padding: 20px;">
+    <!-- Antet Categorie (dacă suntem pe pagina unei categorii) -->
+    {% if categorie_curenta %}
+        <div style="border-left: 8px solid {{ categorie_curenta.culoare }}; padding: 15px; background: #f8f9fa; margin-bottom: 20px; display: flex; align-items: center; gap: 15px;">
+            {% if categorie_curenta.sigla %}
+                <img src="{{ categorie_curenta.sigla.url }}" alt="{{ categorie_curenta.nume }}" style="height: 60px;">
+            {% endif %}
+            <div>
+                <h1 style="color: {{ categorie_curenta.culoare }}; margin: 0;">{{ categorie_curenta.nume }}</h1>
+                <p style="margin: 5px 0 0 0;">{{ categorie_curenta.descriere }}</p>
+            </div>
+        </div>
+    {% else %}
+        <h1>Catalog Complet Produse TCG</h1>
+    {% endif %}
+
+    <!-- Controale de sortare -->
+    <div style="margin-bottom: 15px; padding: 10px; background: #ecf0f1; border-radius: 5px;">
+        <strong>Sortează după:</strong>
+        <a href="?col=pret&sort=a{% for t in taguri_active %}&tag={{ t }}{% endfor %}">Preț Crescător</a> |
+        <a href="?col=pret&sort=d{% for t in taguri_active %}&tag={{ t }}{% endfor %}">Preț Descrescător</a> |
+        <a href="?col=titlu&sort=a{% for t in taguri_active %}&tag={{ t }}{% endfor %}">Nume (A-Z)</a> |
+        <a href="?col=titlu&sort=d{% for t in taguri_active %}&tag={{ t }}{% endfor %}">Nume (Z-A)</a>
+    </div>
+
+    <!-- Taguri active (cu buton 'x' de eliminare) -->
+    {% if taguri_active %}
+        <div style="margin-bottom: 15px;">
+            <strong>Filtre active:</strong>
+            {% for tag_activ in taguri_active %}
+                <a href="?{% if sort_dir %}col={{ sort_col }}&sort={{ sort_dir }}&{% endif %}{% for t in taguri_active %}{% if t != tag_activ %}tag={{ t }}&{% endif %}{% endfor %}"
+                   style="display: inline-block; background: #e74c3c; color: white; padding: 4px 10px; border-radius: 15px; text-decoration: none; margin-right: 5px;">
+                    {{ tag_activ }} <strong>×</strong>
+                </a>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Informații Paginare SUS -->
+    <div style="margin-bottom: 15px; font-weight: bold;">
+        {% if page_obj.paginator.count > 0 %}
+            Se afișează produsele între {{ page_obj.start_index }} și {{ page_obj.end_index }} din totalul de {{ page_obj.paginator.count }} produse.
+            (Pagina {{ page_obj.number }} din {{ page_obj.paginator.num_pages }})
+        {% else %}
+            Nu există produse care să corespundă criteriilor selectate.
+        {% endif %}
+        <div style="margin-top: 5px;">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if query_string_paginare %}&{{ query_string_paginare }}{% endif %}">« Pagina anterioară</a>
+            {% endif %}
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if query_string_paginare %}&{{ query_string_paginare }}{% endif %}" style="margin-left: 15px;">Pagina următoare »</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Grila de Produse -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px;">
+        {% for produs in page_obj %}
+            <div style="border: 2px solid {% if produs.stoc < stoc_min %}#e74c3c{% else %}{{ produs.categorie.culoare }}{% endif %}; border-radius: 8px; padding: 15px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                
+                <!-- Imagine produs sau imagine default -->
+                <div style="text-align: center; height: 160px; margin-bottom: 10px;">
+                    {% if produs.imagine %}
+                        <img src="{{ produs.imagine.url }}" alt="{{ produs.titlu }}" style="max-height: 150px; max-width: 100%;">
+                    {% else %}
+                        <img src="{% static 'trading_app/imagini/indisponibil.png' %}" alt="Imagine indisponibilă" style="max-height: 150px; max-width: 100%;">
+                    {% endif %}
+                </div>
+
+                <!-- Titlu cu link către get_absolute_url() -->
+                <h3 style="margin: 10px 0;">
+                    <a href="{{ produs.get_absolute_url }}" style="text-decoration: none; color: #2c3e50;">{{ produs.titlu }}</a>
+                </h3>
+
+                <!-- Categorie cu culoare, icon/siglă și link -->
+                <p style="margin: 5px 0;">
+                    Categorie:
+                    <a href="{% url 'produse_categorie' produs.categorie.nume %}" style="color: {{ produs.categorie.culoare }}; font-weight: bold;">
+                        {% if produs.categorie.sigla %}
+                            <img src="{{ produs.categorie.sigla.url }}" alt="" style="height: 16px; vertical-align: middle;">
+                        {% endif %}
+                        {{ produs.categorie.nume }}
+                    </a>
+                </p>
+
+                <p style="margin: 5px 0;"><strong>Preț:</strong> {{ produs.pret }} RON</p>
+                <p style="margin: 5px 0;"><strong>Stare:</strong> {{ produs.get_stare_display }}</p>
+
+                <!-- Alertă Stoc Limitat -->
+                {% if produs.stoc < stoc_min %}
+                    <p style="color: #e74c3c; font-weight: bold; margin: 5px 0;">⚠️ Stoc limitat! (Doar {{ produs.stoc }} buc.)</p>
+                {% endif %}
+
+                <!-- Taguri clickabile pentru filtrare -->
+                <div style="margin-top: 10px;">
+                    {% for tag in produs.tags %}
+                        <a href="?{% if sort_dir %}col={{ sort_col }}&sort={{ sort_dir }}&{% endif %}{% for t in taguri_active %}tag={{ t }}&{% endfor %}{% if tag not in taguri_active %}tag={{ tag }}{% endif %}"
+                           style="display: inline-block; background: #dfe6e9; color: #2d3436; padding: 2px 8px; border-radius: 10px; font-size: 0.85em; text-decoration: none; margin: 2px;">
+                            #{{ tag }}
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Informații Paginare JOS -->
+    <div style="margin-top: 20px; font-weight: bold;">
+        Pagina {{ page_obj.number }} din {{ page_obj.paginator.num_pages }}
+        <div style="margin-top: 5px;">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if query_string_paginare %}&{{ query_string_paginare }}{% endif %}">« Pagina anterioară</a>
+            {% endif %}
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if query_string_paginare %}&{{ query_string_paginare }}{% endif %}" style="margin-left: 15px;">Pagina următoare »</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

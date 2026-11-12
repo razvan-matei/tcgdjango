@@ -1,0 +1,73 @@
+{% extends 'trading_app/baza.html' %}
+{% load static %}
+
+{% block title %}{{ produs.titlu }} - Detalii Produs{% endblock %}
+
+{% block content %}
+<div style="padding: 20px; max-width: 900px; margin: auto;">
+    <div style="display: flex; gap: 30px; background: #fff; padding: 20px; border-radius: 8px; border: 2px solid {{ produs.categorie.culoare }};">
+        <div>
+            {% if produs.imagine %}
+                <img src="{{ produs.imagine.url }}" alt="{{ produs.titlu }}" style="max-width: 300px; border-radius: 6px;">
+            {% else %}
+                <img src="{% static 'trading_app/imagini/indisponibil.png' %}" alt="Imagine indisponibilă" style="max-width: 300px; border-radius: 6px;">
+            {% endif %}
+        </div>
+
+        <div>
+            <h1>{{ produs.titlu }}</h1>
+            <p><strong>Categorie:</strong>
+                <a href="{% url 'produse_categorie' produs.categorie.nume %}" style="color: {{ produs.categorie.culoare }}; font-weight: bold;">
+                    {{ produs.categorie.nume }}
+                </a>
+            </p>
+            <p><strong>Preț:</strong> <span style="font-size: 1.3em; color: #27ae60; font-weight: bold;">{{ produs.pret }} RON</span></p>
+            <p><strong>Stoc disponibil:</strong> {{ produs.stoc }} bucăți
+                {% if produs.stoc < stoc_min %}
+                    <span style="color: #e74c3c; font-weight: bold;">(⚠️ Stoc limitat!)</span>
+                {% endif %}
+            </p>
+            <p><strong>Stare:</strong> {{ produs.get_stare_display }}</p>
+            <p><strong>Ediție Foarte Rară:</strong> {% if produs.este_foarte_rar %}Da{% else %}Nu{% endif %}</p>
+            {% if produs.data_lansare %}
+                <p><strong>Data lansării:</strong> {{ produs.data_lansare }}</p>
+            {% endif %}
+            <p><strong>Seturi colecție:</strong>
+                {% for s in produs.seturi.all %}{{ s.nume_set }}{% if not forloop.last %}, {% endif %}{% empty %}Niciun set asociat{% endfor %}
+            </p>
+
+            <!-- Taguri ca linkuri către pagina de produse filtrată -->
+            <p><strong>Taguri:</strong>
+                {% for tag in produs.tags %}
+                    <a href="{% url 'lista_produse' %}?tag={{ tag }}"
+                       style="display: inline-block; background: #dfe6e9; padding: 3px 9px; border-radius: 10px; text-decoration: none; color: #2d3436; margin-right: 4px;">
+                        #{{ tag }}
+                    </a>
+                {% empty %}
+                    Fără taguri
+                {% endfor %}
+            </p>
+        </div>
+    </div>
+
+    <!-- Secțiunea: Produse din aceeași categorie (K produse aleatoare) -->
+    <div style="margin-top: 40px;">
+        <h2>Produse din aceeași categorie</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px;">
+            {% for sim in produse_similare %}
+                <a href="{{ sim.get_absolute_url }}" style="text-decoration: none; color: inherit; border: 1px solid #ccc; border-radius: 8px; padding: 12px; text-align: center; background: #fafafa; display: block;">
+                    {% if sim.imagine %}
+                        <img src="{{ sim.imagine.url }}" alt="{{ sim.titlu }}" style="height: 120px; max-width: 100%;">
+                    {% else %}
+                        <img src="{% static 'trading_app/imagini/indisponibil.png' %}" alt="Imagine indisponibilă" style="height: 120px; max-width: 100%;">
+                    {% endif %}
+                    <h4 style="margin: 10px 0 5px 0;">{{ sim.titlu }}</h4>
+                    <p style="color: #27ae60; font-weight: bold; margin: 0;">{{ sim.pret }} RON</p>
+                </a>
+            {% empty %}
+                <p>Nu există alte produse în această categorie.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -27,6 +27,9 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+#DEBUG = False
+#ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+
 
 # Application definition
 
@@ -37,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.postgres',
     'trading_app',
 ]
 
@@ -56,7 +60,7 @@ ROOT_URLCONF = 'proiect_trading.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -64,6 +68,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'trading_app.context_processors.firma_context',
+                'trading_app.context_processors.categorii_meniu',
             ],
         },
     },
@@ -128,11 +133,11 @@ STATIC_URL = 'static/'
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
 
-MAILERS = {
-    'default': {
-        'BACKEND': 'django.core.mail.backends.console.EmailBackend',
-    },
-}
+#MAILERS = {
+#    'default': {
+#        'BACKEND': 'django.core.mail.backends.console.EmailBackend',
+#    },
+#}
 
 FIRMA_INFO = {
     "nume_firma": "TCG Vault SRL",
@@ -146,3 +151,15 @@ FIRMA_INFO = {
 #ImageField
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+STOC_MIN = 5
+PROD_PER_PAG = 6
+NR_PRODUSE_SIMILARE = 3
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'proiecttcg@gmail.com'
+EMAIL_HOST_PASSWORD = 'cwiv bqlq zvqw tmgi'
+DEFAULT_FROM_EMAIL = 'Magazin TCG <proiecttcg@gmail.com>'

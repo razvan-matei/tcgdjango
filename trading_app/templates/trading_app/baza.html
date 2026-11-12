@@ -8,13 +8,19 @@
 </head>
 <body>
     <header>
-        <div style="padding: 10px; background-color: #2c3e50; text-align: center;">
-            <img src="{% static 'trading_app/imagini/logo.png' %}" alt="Logo TCG Shop" style="max-height: 80px; auto;">
-        </div>
-
         <nav class="meniu-derulant">
             <ul>
                 <li><a href="{% url 'index' %}">Acasă</a></li>
+                <li class="dropdown">
+                    <a href="{% url 'lista_produse' %}">Categorii ▼</a>
+                    <ul class="submenu">
+                        {% for cat in categorii_meniu %}
+                            <li>
+                                <a href="{% url 'produse_categorie' cat.nume %}">{{ cat.nume }}</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </li>
                 <li><a href="{% url 'despre' %}">Despre</a></li>
                 <li><a href="{% url 'istoric' %}">Istoric</a></li>
                 <li><a href="{% url 'info' %}">Info Server</a></li>
