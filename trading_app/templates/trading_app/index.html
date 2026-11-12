@@ -1,0 +1,14 @@
+{% extends 'trading_app/baza.html' %}
+{% load static %}
+
+{% block title %}Acasă - Magazin de Trading Cards{% endblock %}
+
+{% block content %}
+    <div style="padding: 20px; text-align: center;">
+        <h1>Bine ai venit la Magazinul de Trading Cards!</h1>
+        
+        <img src="{% static 'trading_app/imagini/logo.png' %}" alt="Trading Cards Banner" style="max-width: 400px; border-radius: 8px;">
+
+        <p>Platformă comercială online dedicată vânzării de cărți de colecție și pachete TCG.</p>
+    </div>
+{% endblock %}

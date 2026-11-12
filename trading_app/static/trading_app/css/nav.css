@@ -1,0 +1,49 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f9;
+}
+
+.meniu-derulant ul {
+    list-style-type: none;
+    background-color: #2c3e50;
+    padding: 0;
+    margin: 0;
+    display: flex;
+}
+
+.meniu-derulant li {
+    position: relative;
+}
+
+.meniu-derulant a {
+    display: block;
+    color: white;
+    padding: 14px 20px;
+    text-decoration: none;
+}
+
+.meniu-derulant a:hover {
+    background-color: #1abc9c;
+}
+
+/* Submeniu derulant */
+.submenu {
+    display: none !important;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: #34495e;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px rgba(0,0,0,0.2);
+    z-index: 1;
+}
+
+.dropdown:hover .submenu {
+    display: block !important;
+}
+
+.submenu li {
+    width: 100%;
+}

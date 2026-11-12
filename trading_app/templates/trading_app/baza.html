@@ -1,0 +1,50 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Magazin de Trading{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'trading_app/css/nav.css' %}">
+</head>
+<body>
+    <header>
+        <div style="padding: 10px; background-color: #2c3e50; text-align: center;">
+            <img src="{% static 'trading_app/imagini/logo.png' %}" alt="Logo TCG Shop" style="max-height: 80px; auto;">
+        </div>
+
+        <nav class="meniu-derulant">
+            <ul>
+                <li><a href="{% url 'index' %}">Acasă</a></li>
+                <li><a href="{% url 'despre' %}">Despre</a></li>
+                <li><a href="{% url 'istoric' %}">Istoric</a></li>
+                <li><a href="{% url 'info' %}">Info Server</a></li>
+                <li><a href="{% url 'log' %}">Log</a></li>
+                <!-- Submeniu cu secțiuni -->
+                <li class="dropdown">
+                    <a href="#">Magazin TCG ▼</a>
+                    <ul class="submenu">
+                        <li><a href="{% url 'index' %}#sectiune1">Pachete Booster</a></li>
+                        <li><a href="{% url 'index' %}#sectiune2">Cărți Rara</a></li>
+                        <li><a href="{% url 'index' %}#sectiune3">Accesorii Joc</a></li>
+                    </ul>
+                </li>
+                <!-- Linkuri viitoare spre pagini care duc la in_lucru -->
+                <li><a href="{% url 'produse' %}">Produse</a></li>
+                <li><a href="{% url 'contact' %}">Contact</a></li>
+                <li><a href="{% url 'cos_virtual' %}">Coș Virtual</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <hr>
+        <p>IP Utilizator: {{ request.client_ip }}</p>
+        <p>© {{ firma.an_infiintarii }} {{ firma.nume_firma }}. Toate drepturile rezervate.</p>
+        <p>Adresă: {{ firma.adresa }} | Tel: {{ firma.telefon }} | Slogan: {{ firma.slogan }} | Monedă: {{ firma.moneda }}</p>
+    </footer>
+</body>
+</html>
